@@ -25,13 +25,13 @@ This project investigates ecological difference between **long distance transhum
 
 ## Project Goals
 
-1. Extract **vegetation indices** (NDVI, NDRE, NDWI, SAVI, MSAVI, EVI) around geolocated grazing point
-2.Compare LDT vs SDT sites in terms of:
-  -**Vegetation productivity** (NDVI, EVI, SAVI, MSAVI)
-  -**Chlorophyll richness** (NDRE)
-  -**Vegetation resilience** (NDVI persistence)
-  -**Topographic context** (slope, aspect)
-3- Assees the feasability of indirectly approximating the **perenial/annual ratio** via temporal proxies
+1. **Extract **vegetation indices** (NDVI, NDRE, NDWI, SAVI, MSAVI, EVI) around geolocated grazing point
+2. **Compare LDT vs SDT sites in terms of:
+  - **Vegetation productivity** (NDVI, EVI, SAVI, MSAVI)
+  - **Chlorophyll richness** (NDRE)
+  - **Vegetation resilience** (NDVI persistence)
+  - **Topographic context** (slope, aspect)
+3. **Assees the feasability of indirectly approximating the **perenial/annual ratio** via temporal proxies
 
 ---
 
@@ -51,12 +51,12 @@ This project investigates ecological difference between **long distance transhum
 
 ## Workflow summary
 
-1.**Import spatial data** (points, pasturelands, NDVI/NDRE rasters, slope/aspect)
-2.**Buffer generation** around points (e.g 50m radius)
-3.**Zonal statistics** computation using ´rasterstats
-4.**Multi-month NDVI processing** to calculate persistene indices
-5.**Statistical comparison** of LDT vs SDT sites
-6.**Visualization**: boxplots, scattersplots, profile charts, thermatic maps
+1. **Import spatial data** (points, pasturelands, NDVI/NDRE rasters, slope/aspect)
+2. **Buffer generation** around points (e.g 50m radius)
+3. **Zonal statistics** computation using ´rasterstats
+4. **Multi-month NDVI processing** to calculate persistene indices
+5. **Statistical comparison** of LDT vs SDT sites
+6. **Visualization**: boxplots, scattersplots, profile charts, thermatic maps
 
 ---
 
