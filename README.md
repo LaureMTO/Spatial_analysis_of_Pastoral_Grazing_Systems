@@ -52,7 +52,7 @@ This project investigates ecological difference between **long distance transhum
 ## Workflow summary
 
 1. **Import spatial data** (points, pasturelands, NDVI/NDRE rasters, slope/aspect)
-2. **Buffer generation** around points (e.g 50m radius)
+2. **Buffer generation** around points (e.g 200 meters, 500 meters and 1000 meters radius)
 3. **Zonal statistics** computation using ´rasterstats
 4. **Multi-month NDVI processing** to calculate persistene indices
 5. **Statistical comparison** of LDT vs SDT sites
