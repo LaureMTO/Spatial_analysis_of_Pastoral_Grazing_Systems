@@ -65,7 +65,7 @@ This project investigates ecological difference between **long distance transhum
 - **Higher NDVI persistence** in LDT zones -> indicative of perennial vegetation
 - **Elevated NDRE** in LDT areas -> richer, more stable photosynthetic cover
 - **Steeper slopes** and **south-facing aspects** more common in SDT sites -> less favorable conditions
-- **Temporal NDVI profiles in LDT show more stable seasonal trends
+- **Temporal NDVI** profiles in LDT show more stable seasonal trends
 
 ---
 
@@ -73,7 +73,7 @@ This project investigates ecological difference between **long distance transhum
 
 This project was developped as part of my self-guided Learning in geospatial and ecological analysis. It combines scientific research, open data, and remote sensing workflow I designed to strengthen my skills.
 
---
+---
 
 ## Reference
 Godoy-Sepúlveda, F., et al. (2024). *Governance, Mobility, and Pastureland Ecology. An EcoAnthropological Study of Three Pastoral Commons in Northeastern Andalusia*
