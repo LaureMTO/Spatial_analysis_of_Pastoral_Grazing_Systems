@@ -1,6 +1,6 @@
 # Spatial Analysis of Pastoral Grazing Systems (Long Distance Transhumance and Short Distance Transhumance)
 
-This project investigates ecological difference between **long distance transhumance (LDT)** and **short distance transhumance(SDT) grazing sites across the Andalusian municipalities of Castril, Santiago and Pontones. Using remote sensing, GIS and topographic data, we assess vegetation dynamics on pasturelands.
+This project investigates ecological difference between **long distance transhumance (LDT)** and **short distance transhumance(SDT)** grazing sites across the Andalusian municipalities of Castril, Santiago and Pontones. Using remote sensing, GIS and topographic data, we assess vegetation dynamics on pasturelands.
 
 > We based that analysis on the eco-anthropological Framework developed in Godoy-Sepúlveda et al. (2024), *Governance, Mobility, and Pastureland Ecology. An EcoAnthropological Study of Three Pastoral Commons in Northeastern Andalusia*
 
@@ -26,12 +26,12 @@ This project investigates ecological difference between **long distance transhum
 ## Project Goals
 
 1. Extract **vegetation indices** (NDVI, NDRE, NDWI, SAVI, MSAVI, EVI) around geolocated grazing point
-2.Compare LDT vs SDT sites in terms of:
-  -**Vegetation productivity** (NDVI, EVI, SAVI, MSAVI)
-  -**Chlorophyll richness** (NDRE)
-  -**Vegetation resilience** (NDVI persistence)
-  -**Topographic context** (slope, aspect)
-3- Assees the feasability of indirectly approximating the **perenial/annual ratio** via temporal proxies
+2. Compare LDT vs SDT sites in terms of:
+  - **Vegetation productivity** (NDVI, EVI, SAVI, MSAVI)
+  - **Chlorophyll richness** (NDRE)
+  - **Vegetation resilience** (NDVI persistence)
+  - **Topographic context** (slope, aspect)
+3. Assees the feasability of indirectly approximating the **perenial/annual ratio** via temporal proxies
 
 ---
 
@@ -51,12 +51,12 @@ This project investigates ecological difference between **long distance transhum
 
 ## Workflow summary
 
-1.**Import spatial data** (points, pasturelands, NDVI/NDRE rasters, slope/aspect)
-2.**Buffer generation** around points (e.g 50m radius)
-3.**Zonal statistics** computation using ´rasterstats
-4.**Multi-month NDVI processing** to calculate persistene indices
-5.**Statistical comparison** of LDT vs SDT sites
-6.**Visualization**: boxplots, scattersplots, profile charts, thermatic maps
+1. **Import spatial data** (points, pasturelands, NDVI/NDRE rasters, slope/aspect)
+2. **Buffer generation** around points (e.g 200 meters, 500 meters and 1000 meters radius)
+3. **Zonal statistics** computation using ´rasterstats
+4. **Multi-month NDVI processing** to calculate persistene indices
+5. **Statistical comparison** of LDT vs SDT sites
+6. **Visualization**: boxplots, scattersplots, profile charts, thermatic maps
 
 ---
 
@@ -65,7 +65,7 @@ This project investigates ecological difference between **long distance transhum
 - **Higher NDVI persistence** in LDT zones -> indicative of perennial vegetation
 - **Elevated NDRE** in LDT areas -> richer, more stable photosynthetic cover
 - **Steeper slopes** and **south-facing aspects** more common in SDT sites -> less favorable conditions
-- **Temporal NDVI profiles in LDT show more stable seasonal trends
+- **Temporal NDVI** profiles in LDT show more stable seasonal trends
 
 ---
 
@@ -73,7 +73,7 @@ This project investigates ecological difference between **long distance transhum
 
 This project was developped as part of my self-guided Learning in geospatial and ecological analysis. It combines scientific research, open data, and remote sensing workflow I designed to strengthen my skills.
 
---
+---
 
 ## Reference
 Godoy-Sepúlveda, F., et al. (2024). *Governance, Mobility, and Pastureland Ecology. An EcoAnthropological Study of Three Pastoral Commons in Northeastern Andalusia*
