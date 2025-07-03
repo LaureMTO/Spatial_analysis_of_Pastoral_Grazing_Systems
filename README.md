@@ -25,13 +25,13 @@ This project investigates ecological difference between **long distance transhum
 
 ## Project Goals
 
-1. **Extract **vegetation indices** (NDVI, NDRE, NDWI, SAVI, MSAVI, EVI) around geolocated grazing point
-2. **Compare LDT vs SDT sites in terms of:
+1. Extract **vegetation indices** (NDVI, NDRE, NDWI, SAVI, MSAVI, EVI) around geolocated grazing point
+2. Compare LDT vs SDT sites in terms of:
   - **Vegetation productivity** (NDVI, EVI, SAVI, MSAVI)
   - **Chlorophyll richness** (NDRE)
   - **Vegetation resilience** (NDVI persistence)
   - **Topographic context** (slope, aspect)
-3. **Assees the feasability of indirectly approximating the **perenial/annual ratio** via temporal proxies
+3. Assees the feasability of indirectly approximating the **perenial/annual ratio** via temporal proxies
 
 ---
 
