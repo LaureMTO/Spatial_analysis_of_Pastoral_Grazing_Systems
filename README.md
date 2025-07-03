@@ -1,6 +1,6 @@
 # Spatial Analysis of Pastoral Grazing Systems (Long Distance Transhumance and Short Distance Transhumance)
 
-This project investigates ecological difference between **long distance transhumance (LDT)** and **short distance transhumance(SDT) grazing sites across the Andalusian municipalities of Castril, Santiago and Pontones. Using remote sensing, GIS and topographic data, we assess vegetation dynamics on pasturelands.
+This project investigates ecological difference between **long distance transhumance (LDT)** and **short distance transhumance(SDT)** grazing sites across the Andalusian municipalities of Castril, Santiago and Pontones. Using remote sensing, GIS and topographic data, we assess vegetation dynamics on pasturelands.
 
 > We based that analysis on the eco-anthropological Framework developed in Godoy-Sepúlveda et al. (2024), *Governance, Mobility, and Pastureland Ecology. An EcoAnthropological Study of Three Pastoral Commons in Northeastern Andalusia*
 
