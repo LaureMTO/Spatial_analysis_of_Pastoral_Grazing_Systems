@@ -26,44 +26,44 @@ This project investigates ecological difference between **long distance transhum
 
 ## Project Goals
 
-1. Extract **vegetation indices** (NDVI, NDRE, NDWI, SAVI, MSAVI, EVI) around geolocated grazing point
-2. Compare LDT vs SDT sites in terms of:
-  - **Vegetation productivity** (NDVI, MSAVI, NDRE)
-  - **Chlorophyll richness** (NDRE)
-  - **Vegetation resilience** (MSAVI persistence)
-  - **Topographic context** (slope, aspect)
-3. Assees the feasability of indirectly approximating the **perenial/annual ratio** via temporal proxies
+1. Extract and summarize **vegetation indices** (NDVI, NDRE, MSAVI) for buffered pasture areas.
+2. Compare ecological performance of LDT vs SDT zones using:
+   - **Seasonal vegetation productivity** (mean NDVI/MSAVI)
+   - **Chlorophyll content proxy** (NDRE)
+   - **Temporal stability / resilience** (MSAVI amplitude and persistence)
+   - **Topographic constraints** (slope and aspect)
+3. Evaluate whether multi-temporal vegetation patterns can help infer the **annual vs perennial composition** of plant communities.
 
 ---
 
 ## Key Indicators
 
-| Name | Formula / Method | Ecological Meaning |
-|------|------------------|--------------------|
-| `MSAVI_mean` | Mean value within buffer | Instant green biomass |
-| `MSAVI_std` | Standard deviation | Spatial heterogeneity |
-| `MSAVI_mean` | NDRE buffer mean | Chlorophyll maturity |
-| `NDRE_vs_MSAVI` | NDRE / MSAVI ratio | Relative pigment content |
-| `MSAVI_persistence` | `1 - (std / mean)` or `min / max` | Temporal stability (vegetation persistence) |
-| `slope_mean` | Average slope in ° | Grazing accessibility constraint |
-| `aspect_mean` | Mean aspect (0–360°) | Solar exposure (N, S, E, W) |
+| Variable | Description | Interpretation |
+|----------|-------------|----------------|
+| `MSAVI_mean` | Average MSAVI over Apr–Jul | Proxy for green biomass |
+| `MSAVI_std` | Std dev over season | Temporal variability |
+| `NDRE_mean` | Average NDRE | Proxy for chlorophyll content |
+| `NDRE / MSAVI` | Exploratory ratio | Relative pigment concentration (needs caution) |
+| `MSAVI_persistence` | `1 - (std / mean)` or `min / max` | Stability/resilience proxy |
+| `slope_mean` | Mean slope | Terrain accessibility |
+| `aspect_mean` | Mean aspect (degrees) | Solar exposure (N/S bias) |
 
 ---
 
 ## Workflow summary
 
-1. **Import spatial data** (points, pasturelands, NDVI/NDRE rasters, slope/aspect)
-2. **Buffer generation** around points (e.g 200 meters, 500 meters and 1000 meters radius)
-3. **Zonal statistics** computation using ´rasterstats
-4. **Multi-month MSAVI processing** to calculate persistene indices
-5. **Statistical comparison** of LDT vs SDT sites
-6. **Visualization**: boxplots, scattersplots, profile charts, thermatic maps
-
+ A[Délimitation des pâturages<br/>(buffers géographiques autour des sites)] --> B[Import Sentinel-2 SR<br/>+ Masquage nuages]
+  B --> C[Calcul des indices NDVI, MSAVI, NDRE<br/> (par mois d'avril à juillet)]
+  C --> D[Zonal statistics<br/>(moyenne, écart-type, min, max)]
+  D --> E[Calcul d'indicateurs<br/>- Moyenne saisonnière<br/>- Amplitude<br/>- Pic saisonnier<br/>- Persistance]
+  E --> F[Export vers CSV<br/>(Google Drive ou Earth Engine)]
+  F --> G[Analyse comparative<br/>LDT vs SDT]
+  G --> H[Visualisation dans QGIS / Python<br/>Boxplots, Heatmaps, Cartes]
 ---
 
 ## Expected Outcomes (based on article hypothèses)
 
-- **Higher NDVI persistence** in LDT zones -> indicative of perennial vegetation
+- **Higher MSAVI persistence** in LDT zones -> indicative of perennial vegetation
 - **Elevated NDRE** in LDT areas -> richer, more stable photosynthetic cover
 - **Steeper slopes** and **south-facing aspects** more common in SDT sites -> less favorable conditions
 - **Temporal NDVI** profiles in LDT show more stable seasonal trends
