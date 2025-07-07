@@ -8,16 +8,17 @@ This project investigates ecological difference between **long distance transhum
 
 ## Repository Structure
 
-- `README.md` — project overview
+- `README.md` - project overview
 - `notebooks/`
   - `spatial_analysis_grazing_LDT_SDT.ipynb` — 
 - `data/`
-  - `pasture_points.geojson` — LDT and SDT point locations
-  - `NDVI_2024_04_10m.tif` — NDVI raster (selected month)
-  - `NDRE_2024_04_10m.tif` — NDRE raster (Sentinel-2)
-  - `NDVI_series/` — monthly NDVI series (April–September)
-  - `slope.tif` / `aspect.tif` — slope and aspect rasters (DEM-based)
-- `scripts/` — zonal stats functions, analysis tools
+  - `Buffers/` - 200, 500, 1000 radius buffers shapefiles
+  - `Shapefiles/` 
+  - `rasters/`
+    - `Terrain analysis/` - slopes, aspect, DEM, hillshade, contour, Roughness
+    - `Vegetation indices/` - MSAVI, NDVI, NDRE, MSAVI_series (monthly series (April-July)
+  - `ZonalStat500/` ZonalStats_2017, ZonalStats_2018, ZonalStats_2019
+- `scripts/` — zonal stats functions, analysis tools, index pastureland, visualisation_indices, ZonalStats_buffer500_2017_2018_2019
 - `figures/` — plots, maps, time series visualizations
 - `references/` — articles and summaries
 
@@ -27,9 +28,9 @@ This project investigates ecological difference between **long distance transhum
 
 1. Extract **vegetation indices** (NDVI, NDRE, NDWI, SAVI, MSAVI, EVI) around geolocated grazing point
 2. Compare LDT vs SDT sites in terms of:
-  - **Vegetation productivity** (NDVI, EVI, SAVI, MSAVI)
+  - **Vegetation productivity** (NDVI, MSAVI, NDRE)
   - **Chlorophyll richness** (NDRE)
-  - **Vegetation resilience** (NDVI persistence)
+  - **Vegetation resilience** (MSAVI persistence)
   - **Topographic context** (slope, aspect)
 3. Assees the feasability of indirectly approximating the **perenial/annual ratio** via temporal proxies
 
@@ -39,11 +40,11 @@ This project investigates ecological difference between **long distance transhum
 
 | Name | Formula / Method | Ecological Meaning |
 |------|------------------|--------------------|
-| `NDVI_mean` | Mean value within buffer | Instant green biomass |
-| `NDVI_std` | Standard deviation | Spatial heterogeneity |
-| `NDRE_mean` | NDRE buffer mean | Chlorophyll maturity |
-| `NDRE_vs_NDVI` | NDRE / NDVI ratio | Relative pigment content |
-| `NDVI_persistence` | `1 - (std / mean)` or `min / max` | Temporal stability (vegetation persistence) |
+| `MSAVI_mean` | Mean value within buffer | Instant green biomass |
+| `MSAVI_std` | Standard deviation | Spatial heterogeneity |
+| `MSAVI_mean` | NDRE buffer mean | Chlorophyll maturity |
+| `NDRE_vs_MSAVI` | NDRE / MSAVI ratio | Relative pigment content |
+| `MSAVI_persistence` | `1 - (std / mean)` or `min / max` | Temporal stability (vegetation persistence) |
 | `slope_mean` | Average slope in ° | Grazing accessibility constraint |
 | `aspect_mean` | Mean aspect (0–360°) | Solar exposure (N, S, E, W) |
 
@@ -54,7 +55,7 @@ This project investigates ecological difference between **long distance transhum
 1. **Import spatial data** (points, pasturelands, NDVI/NDRE rasters, slope/aspect)
 2. **Buffer generation** around points (e.g 200 meters, 500 meters and 1000 meters radius)
 3. **Zonal statistics** computation using ´rasterstats
-4. **Multi-month NDVI processing** to calculate persistene indices
+4. **Multi-month MSAVI processing** to calculate persistene indices
 5. **Statistical comparison** of LDT vs SDT sites
 6. **Visualization**: boxplots, scattersplots, profile charts, thermatic maps
 
