@@ -12,7 +12,7 @@ This project investigates ecological difference between **long distance transhum
 - `notebooks/`
   - `spatial_analysis_grazing_LDT_SDT.ipynb` — 
 - `data/`
-  - `Buffers/` - 200, 500, 1000 radius buffers shapefiles
+  - `Buffers/` - 200m, 500m, 1000m radius buffers shapefiles
   - `Shapefiles/` 
   - `rasters/`
     - `Terrain analysis/` - slopes, aspect, DEM, hillshade, contour, Roughness
