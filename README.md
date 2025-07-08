@@ -51,7 +51,7 @@ This project investigates ecological difference between **long distance transhum
 
  ### Main Steps
 
-1. **Define grazing areas**  
+### 1. Define grazing areas  
    - Import polygon buffers around grazing locations  
    - Fixed radius (e.g., 500 m) 
 
