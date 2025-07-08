@@ -24,7 +24,7 @@ This project investigates ecological difference between **long distance transhum
 2. Compare ecological performance of LDT vs SDT zones using:
    - **Seasonal vegetation productivity** (mean NDVI/MSAVI/SAVI)
    - **Chlorophyll content proxy** (NDRE)
-   - **Temporal stability (SAVI amplitude)
+   - **Temporal stability** (SAVI amplitude)
    - **Topographic constraints** (slope and aspect)
 3. Evaluate whether multi-temporal vegetation patterns can help infer the **annual vs perennial composition** of plant communities.
 
