@@ -38,35 +38,78 @@ This project investigates ecological difference between **long distance transhum
 
 ## Key Indicators
 
-| Variable | Description | Interpretation |
-|----------|-------------|----------------|
-| `MSAVI_mean` | Average MSAVI over Apr–Jul | Proxy for green biomass |
-| `MSAVI_std` | Std dev over season | Temporal variability |
-| `NDRE_mean` | Average NDRE | Proxy for chlorophyll content |
-| `NDRE / MSAVI` | Exploratory ratio | Relative pigment concentration (needs caution) |
-| `MSAVI_persistence` | `1 - (std / mean)` or `min / max` | Stability/resilience proxy |
-| `slope_mean` | Mean slope | Terrain accessibility |
-| `aspect_mean` | Mean aspect (degrees) | Solar exposure (N/S bias) |
+## 🌿 Key Indicators
+
+| Variable             | Description                                      | Ecological Interpretation                                |
+|----------------------|--------------------------------------------------|----------------------------------------------------------|
+| `NDVI_mean`          | Average NDVI from April to July                  | General vegetation productivity                          |
+| `NDVI_std`           | NDVI standard deviation over the season          | Seasonal variation in greenness                         |
+| `MSAVI_mean`         | Mean MSAVI during the growing season             | Green biomass proxy, less sensitive to bare soil         |
+| `MSAVI_amplitude`    | Difference between max and min MSAVI             | Intensity of seasonal growth dynamics                    |
+| `NDRE_mean`          | Average NDRE over growing season                 | Proxy for leaf chlorophyll content (plant health)        |
+| `NDRE_peakMonth`     | Month with highest NDRE value                    | Timing of peak chlorophyll richness                      |
+| `slope_mean`         | Mean slope within buffer                         | Constraint for grazing movement or accessibility         |
+| `aspect_category`    | Dominant aspect class (N, S, E, W)               | Sunlight exposure and microclimate (affects vegetation)  |
 
 ---
 
 ## Workflow summary
 
- A[Délimitation des pâturages<br/>(buffers géographiques autour des sites)] --> B[Import Sentinel-2 SR<br/>+ Masquage nuages]
-  B --> C[Calcul des indices NDVI, MSAVI, NDRE<br/> (par mois d'avril à juillet)]
-  C --> D[Zonal statistics<br/>(moyenne, écart-type, min, max)]
-  D --> E[Calcul d'indicateurs<br/>- Moyenne saisonnière<br/>- Amplitude<br/>- Pic saisonnier<br/>- Persistance]
-  E --> F[Export vers CSV<br/>(Google Drive ou Earth Engine)]
-  F --> G[Analyse comparative<br/>LDT vs SDT]
-  G --> H[Visualisation dans QGIS / Python<br/>Boxplots, Heatmaps, Cartes]
----
+ ### Main Steps
 
-## Expected Outcomes (based on article hypothèses)
+1. **Define grazing areas**  
+   - Import polygon buffers around grazing locations  
+   - Fixed radius (e.g., 500 m) 
 
-- **Higher MSAVI persistence** in LDT zones -> indicative of perennial vegetation
-- **Elevated NDRE** in LDT areas -> richer, more stable photosynthetic cover
-- **Steeper slopes** and **south-facing aspects** more common in SDT sites -> less favorable conditions
-- **Temporal NDVI** profiles in LDT show more stable seasonal trends
+2. **Import Sentinel-2 Harmonized imagery**  
+   - Timeframe: April to July (2017, 2018, 2019)  
+
+3. **Calculate monthly vegetation indices**  
+   - **NDVI**: photosynthetic activity  
+   - **MSAVI**: green biomass (better in sparse vegetation)  
+   - **NDRE**: chlorophyll richness  
+
+4. **Zonal statistics per buffer**  
+   - Mean for each index  
+   - Standard deviation, min, max  
+   - Derived indicators:  
+     - Seasonal mean  
+     - Amplitude (max - min)  
+     - Peak month (phenology)  
+     - Persistence (`min / max` or `1 - std/mean`)
+
+5. **Export results**  
+   - CSV tables (one per year) via `Export.table.toDrive`  
+
+6. **Comparative analysis**  
+   - Compare LDT vs SDT mobility regimes  
+   - Visualizations: boxplots, thematic maps, heatmaps  
+   - Relate to topographic context: slope, aspect 
+
+##  Expected Outcomes
+
+Based on the hypotheses and conclusions of the original study, the analysis aims to verify the following patterns:
+
+- **Greater vegetation stability** in LDT (long-distance transhumance) zones, reflected by:
+  - Lower seasonal variability in MSAVI or NDVI
+  - More consistent vegetation cover during the grazing season (April–July)
+
+- **Higher photosynthetic activity** and **leaf pigment content** in LDT areas, evidenced by:
+  - Higher NDRE values (proxy for chlorophyll richness)
+  - Higher seasonal NDVI and MSAVI means
+
+- **More favorable ecological conditions** in well-managed or strictly governed areas (Pontones), associated with:
+  - Smoother seasonal profiles (lower NDVI/MSAVI fluctuation)
+  - Earlier or more stable seasonal peaks (peak month patterns)
+
+- **Challenging grazing environments** in SDT (short-distance transhumance) zones, potentially linked to:
+  - Steeper slopes (mean slope higher)
+  - Less favorable solar exposure (e.g., southern aspects with higher evapotranspiration)
+
+- **Temporal vegetation dynamics** as a potential proxy for identifying areas dominated by **perennial vs. annual species**, where:
+  - More persistent MSAVI/NDVI signals could indicate perennial vegetation
+  - Greater amplitude and variability may reflect dominance of fast-growing annuals
+
 
 ---
 
