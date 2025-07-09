@@ -79,7 +79,7 @@ This project investigates ecological difference between **long distance transhum
 - Charts created using Earth Engine and Google Sheets
 - Exported an animated **SAVI time series map** (2017–2022, April–July) as both **GIF** and **MP4**
 
-## 4. Topographic and Physical Variables (QGIS)
+### 4. Topographic and Physical Variables (QGIS)
 
 - Used a high-resolution Digital Elevation Model (DEM) to extract topographic features per buffer zone:
   - `slope_mean` – Mean slope (°) per buffer
@@ -88,9 +88,7 @@ This project investigates ecological difference between **long distance transhum
 - All layers were clipped to buffer extent, and **zonal statistics** were computed using the **Raster > Zonal Statistics** tool in QGIS.
 - Resulting values were merged with vegetation indices into a unified table for multi-variable analysis.
 
----
-
-## 5. Descriptive Analysis by Grazing Type
+### 5. Descriptive Analysis by Grazing Type
 
 - Aggregated the final dataset by **grazing mobility type** (`type_pasto`: LDT, SDT, Mixed) and **year**.
 - Computed **mean** and **standard deviation** for key ecological indicators:
