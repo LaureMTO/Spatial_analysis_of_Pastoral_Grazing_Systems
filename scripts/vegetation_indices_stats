@@ -6,15 +6,15 @@
 // This script computes zonal statistics (mean, standard deviation, min, max)
 // for vegetation indices (NDVI, SAVI, MSAVI, NDRE, MNDWI) using Sentinel-2 imagery.
 // The analysis is conducted on 200-meter radius buffers for each year between 2017 and 2022.
-// A cloud masking function based on the Scene Classification Layer (SCL) is applied.
+// A cloud masking function based on the collection S2 CLOUD PROBABILITY is applied.
 
 // Requirements:
 // - An imported FeatureCollection named 'AreaOfStudy' (polygon of the study region)
 // - An imported FeatureCollection named 'buffer200' (circular buffers around pasture zones)
-// - The study area must fall within the coverage of the 'COPERNICUS/S2_SR_HARMONIZED' collection
 
 
-// 1. Periods to analyse (2017-2022)
+// 1. Dates over which to create a median composite
+
 var dateRange = [
   {label: '2017', start: '2017-04-01', end: '2017-08-01'}, // adapt if needed
   {label: '2018', start: '2018-04-01', end: '2018-08-01'},
@@ -24,22 +24,45 @@ var dateRange = [
   {label: '2022', start: '2022-04-01', end: '2022-08-01'},
 ];
 
-// 2. Define cloud masking with SCL (Scene Classification Layer)
 
-function maskCloud(image) {
-  var scl = image.select('SCL');
-  var mask = scl.neq(3)  // cloud shadow
-              .and(scl.neq(8))  // cloud medium probability
-              .and(scl.neq(9))  // cloud high probability
-              .and(scl.neq(10)) // thin cirrus
-              .and(scl.neq(11)); // snow or ice
+// 2. Loading Sentinel-2 CLOUD PROBABILITY
 
-  return image.updateMask(mask)
-              .copyProperties(image, ['system:time_start']);
+var s2Clouds = ee.ImageCollection('COPERNICUS/S2_CLOUD_PROBABILITY');
+
+
+// 3. Loading Sentinel-2 surface reflectance data for the composite
+
+var s2SR = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED');
+
+
+// 4. Masking cloud probability maximum variable
+
+var MAX_CLOUD_PROBABILITY = 45;
+
+Map.centerObject(AreaOfStudy); // Adjust the name of the imported feature
+
+
+// 5. Define Cloud mask function
+
+function maskClouds(img) {
+  var clouds = ee.Image(img.get('cloud_mask')).select('probability');
+  var isNotCloud = clouds.lt(MAX_CLOUD_PROBABILITY);
+  return img.updateMask(isNotCloud);
+}
+
+// The masks for the 10m bands sometimes do not exclude bad data at
+// scene edges, so we apply masks from the 20m and 60m bands as well.
+// Example asset that needs this operation:
+// COPERNICUS/S2_CLOUD_PROBABILITY/20190301T000239_20190301T000238_T55GDP
+
+function maskEdges(s2_img) {
+  return s2_img.updateMask(
+      s2_img.select('B8A').mask().updateMask(s2_img.select('B9').mask())
+  );
 }
 
 
-// 3. Defining indices function (NDVI, MSAVI, NDRE, SAVI)
+// 6. Defining indices function (NDVI, MSAVI, NDRE, SAVI)
 
 function addIndices(image) {
   var ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI');
@@ -67,22 +90,38 @@ function addIndices(image) {
         .addBands(mndwi)
 }
 
-// 4. Compute one median composite per year with indices
+
+// 7. Compute one median composite per year with indices and cloud mask
 
 var imagePerYear = dateRange.map(function(p) {
 
-  var filteredS2 = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
-                    .filterDate(p.start, p.end)
-                    .filterBounds(buffer200)
-                    .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20))
-                    .map(maskCloud)
-                    .map(addIndices)
-                    .median();
+  var filtereds2SR = s2SR.filterDate(p.start, p.end)
+                     .filterBounds(buffer200)
+                     .map(maskEdges);
+                
+  var filtered2Clouds = s2Clouds.filterDate(p.start, p.end)
+                        .filterBounds(buffer200)
   
-  return filteredS2.set('year', p.label);
+  var join = ee.Join.saveFirst('cloud_mask').apply({
+    primary: filtereds2SR,
+    secondary: filtered2Clouds,
+    condition: ee.Filter.equals({
+      leftField: 'system:index',
+      rightField: 'system:index'
+    })
+  });
+  
+  var joinedCollection = ee.ImageCollection(join)
+                          .map(maskClouds)
+                          .map(addIndices)
+                          .median();
+                          
+                          
+  return joinedCollection.set('year', p.label);
 });
 
-// 5. Calculate zonal statistics over buffers for each year
+
+// 8. Calculate zonal statistics over buffers for each year
 
 var zonalStats = imagePerYear.map(function(image) {
   var year = image.get('year')
@@ -101,12 +140,15 @@ var zonalStats = imagePerYear.map(function(image) {
   });
 });
 
+print("Vegetation indices Zonal Stats", zonalStats)
 
-// 6. Merge all results into a single FeatureCollection before export
+
+// 9. Merge all results into a single FeatureCollection before export
 
 var allZonalStats = ee.FeatureCollection(zonalStats).flatten();
 
-// 7. Export of Zonal statistics of Vegetation Indices on buffers
+
+// 10. Export of Zonal statistics of Vegetation Indices on buffers
 
 Export.table.toDrive({
  collection: allZonalStats, 
@@ -116,7 +158,8 @@ Export.table.toDrive({
  fileFormat: 'CSV'
 });
 
-// 8. Indices Visualization settings
+
+// 11. Indices Visualization settings
 
 var NdviVis = {
   min: 0,
@@ -140,29 +183,14 @@ var MndwiVis = {
   palette:['#ffffcc','#a1dab4','#41b6c4','#2c7fb8','#253494']
 };
 
-// 9. Display vegetation indices of a selected year (e.g. 2022)
+
+// 12. Display vegetation indices of a selected year (e.g. 2022)
 
 var composite = ee.Image(imagePerYear[5]) // Change index for a different year
+
 
 Map.addLayer(composite.select('NDVI').clip(AreaOfStudy), NdviVis, 'NDVI composite');
 Map.addLayer(composite.select('SAVI').clip(AreaOfStudy), NdviVis, 'SAVI composite');
 Map.addLayer(composite.select('MSAVI').clip(AreaOfStudy), NdviVis, 'MSAVI composite');
 Map.addLayer(composite.select('NDRE').clip(AreaOfStudy), NdreVis, 'NDRE composite');
 Map.addLayer(composite.select('MNDWI').clip(AreaOfStudy), MndwiVis, 'MNDWI composite'); 
-
-
-// 10. Export rasters for selected year
-
-var indices = ['NDVI', 'SAVI', 'MSAVI', 'NDRE', 'MNDWI'];
-indices.forEach(function(index) {
-  Export.image.toDrive({
-    image: composite.select(index),
-    description: index + '_raster_2022', // Change name if needed
-    folder: 'Pastureland', // Change the folder name
-    fileNamePrefix: index + '_2022', // Change name if needed
-    region: AreaOfStudy.geometry(),
-    scale: 10,
-    crs: 'EPSG:25830', // Adjust depending on the region
-    maxPixels: 1e10
-  });
-});
