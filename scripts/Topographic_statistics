@@ -1,0 +1,84 @@
+// Script: Terrain Analysis using SRTM DEM
+
+// Project: Transhumant Pastureland Analysis
+
+// Description: This script computes elevation, slope, and aspect
+//              inside defined buffers representing pasturelands.
+
+// Requirements: - An imported FeatureCollection named 'AreaOfStudy'
+//               - An imported FeatureCollection of circular buffers named 'buffer200'
+
+
+// 1. Loading the DEM for terrain analysis with SRTM (30m resolution)
+
+var dem = ee.Image('USGS/SRTMGL1_003');
+var terrain = ee.Terrain.products(dem)
+
+
+// 2. Extracting elevation, slope and aspect 
+
+var slope = terrain.select('slope').rename('slope_mean');     // in degrees
+
+var aspect = terrain.select('aspect').rename('aspect_mean');   // in degrees
+
+var elevation = terrain.select('elevation').rename('elevation_mean');
+
+
+// 3. Combine terrain variables into a single image
+
+var topoImage = elevation
+                .addBands(slope)
+                .addBands(aspect)
+                
+
+// 4. Compute Zonal statistics of elevation, slope and aspect for each buffer
+
+var topoStats = topoImage.reduceRegions({
+                collection: buffer200, 
+                reducer: ee.Reducer.mean(), 
+                scale: 30, 
+                crs:'EPSG:25830', // Adjust depending on the region
+                maxPixelsPerRegion: 1e10
+                });
+
+print("Topographic Stats per buffer", topoStats)
+
+
+// 5. Visualization parameters
+
+var demVis = {
+  min: 0,
+  max: 3500, // Adjust depending on the region
+  palette : ['#0000ff', '#00ffff', '#00ff00', '#ffff00',
+  '#ff8000', '#ff0000', '#ffffff'
+]};
+
+
+// 6. Display elevation on the map
+
+Map.centerObject(AreaOfStudy, 10)
+Map.addLayer(terrain.select('elevation').clip(AreaOfStudy), demVis, 'Elevation')
+
+
+// 7. Export of topographic statistics as csv to Google Drive
+
+Export.table.toDrive({
+ collection: topoStats, 
+ description: 'Topographic_Stats', 
+ folder: 'Pastureland', // Modify the folder name
+ fileNamePrefix: 'Topographic_Stats', 
+ fileFormat: 'CSV'
+});
+
+// 8. Optional: Export of elevation raster to Google Drive
+
+Export.image.toDrive({
+  image:terrain.select('elevation'), 
+  description: 'elevation', 
+  folder: 'Pastureland', // Modify the folder name
+  fileNamePrefix: 'elevation',
+  region: AreaOfStudy.geometry(), 
+  scale: 30, 
+  crs: 'EPSG:25830', // Adjust depending on the region
+  maxPixels: 1e10
+  })
