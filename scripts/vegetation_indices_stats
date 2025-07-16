@@ -1,0 +1,168 @@
+// Script: Zonal Statistics of Vegetation Indices (2017–2022)
+
+// Project: Transhumant Pastureland Analysis
+
+// Description: 
+// This script computes zonal statistics (mean, standard deviation, min, max)
+// for vegetation indices (NDVI, SAVI, MSAVI, NDRE, MNDWI) using Sentinel-2 imagery.
+// The analysis is conducted on 200-meter radius buffers for each year between 2017 and 2022.
+// A cloud masking function based on the Scene Classification Layer (SCL) is applied.
+
+// Requirements:
+// - An imported FeatureCollection named 'AreaOfStudy' (polygon of the study region)
+// - An imported FeatureCollection named 'buffer200' (circular buffers around pasture zones)
+// - The study area must fall within the coverage of the 'COPERNICUS/S2_SR_HARMONIZED' collection
+
+
+// 1. Periods to analyse (2017-2022)
+var dateRange = [
+  {label: '2017', start: '2017-04-01', end: '2017-08-01'}, // adapt if needed
+  {label: '2018', start: '2018-04-01', end: '2018-08-01'},
+  {label: '2019', start: '2019-04-01', end: '2019-08-01'},
+  {label: '2020', start: '2020-04-01', end: '2020-08-01'},
+  {label: '2021', start: '2021-04-01', end: '2021-08-01'},
+  {label: '2022', start: '2022-04-01', end: '2022-08-01'},
+];
+
+// 2. Define cloud masking with SCL (Scene Classification Layer)
+
+function maskCloud(image) {
+  var scl = image.select('SCL');
+  var mask = scl.neq(3)  // cloud shadow
+              .and(scl.neq(8))  // cloud medium probability
+              .and(scl.neq(9))  // cloud high probability
+              .and(scl.neq(10)) // thin cirrus
+              .and(scl.neq(11)); // snow or ice
+
+  return image.updateMask(mask)
+              .copyProperties(image, ['system:time_start']);
+}
+
+
+// 3. Defining indices function (NDVI, MSAVI, NDRE, SAVI)
+
+function addIndices(image) {
+  var ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI');
+   
+  var msavi = image.expression(
+    '(2 * NIR + 1 - sqrt(pow((2 * NIR + 1), 2) - 8 * (NIR - RED)) ) / 2', {
+      'NIR': image.select('B8').multiply(0.0001),
+      'RED': image.select('B4').multiply(0.0001)
+    }).rename('MSAVI');
+  
+  var ndre = image.normalizedDifference(['B8', 'B5']).rename('NDRE');
+  
+  var savi = image.expression(
+    '1.5 * ((NIR - RED) / (NIR + RED + 0.5))', {
+      'NIR': image.select('B8').multiply(0.0001),
+      'RED': image.select('B4').multiply(0.0001),
+}).rename('SAVI');
+   
+  var mndwi = image.normalizedDifference(['B3', 'B11']).rename('MNDWI');
+
+  return ndvi
+        .addBands(savi)
+        .addBands(msavi)
+        .addBands(ndre)
+        .addBands(mndwi)
+}
+
+// 4. Compute one median composite per year with indices
+
+var imagePerYear = dateRange.map(function(p) {
+
+  var filteredS2 = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
+                    .filterDate(p.start, p.end)
+                    .filterBounds(buffer200)
+                    .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20))
+                    .map(maskCloud)
+                    .map(addIndices)
+                    .median();
+  
+  return filteredS2.set('year', p.label);
+});
+
+// 5. Calculate zonal statistics over buffers for each year
+
+var zonalStats = imagePerYear.map(function(image) {
+  var year = image.get('year')
+  
+  var stats = image.reduceRegions({
+              collection: buffer200,
+              reducer: ee.Reducer.mean()
+                      .combine(ee.Reducer.stdDev(), '', true)
+                      .combine(ee.Reducer.minMax(), '', true),
+              scale: 10, 
+              crs: 'EPSG:25830', // Adjust depending on the region
+            maxPixelsPerRegion: 1e10
+            });
+  return stats.map(function(f) {
+    return f.set('year', year);
+  });
+});
+
+
+// 6. Merge all results into a single FeatureCollection before export
+
+var allZonalStats = ee.FeatureCollection(zonalStats).flatten();
+
+// 7. Export of Zonal statistics of Vegetation Indices on buffers
+
+Export.table.toDrive({
+ collection: allZonalStats, 
+ description: 'ZonalStats_indices', 
+ folder: 'Pastureland', 
+ fileNamePrefix: 'ZonalStats_indices', 
+ fileFormat: 'CSV'
+});
+
+// 8. Indices Visualization settings
+
+var NdviVis = {
+  min: 0,
+  max: 0.7,
+  palette: [
+    'FFFFFF', 'CE7E45', 'DF923D', 'F1B555', 'FCD163', '99B718',
+  '74A901', '66A000', '529400', '3E8601', '207401', '056201',
+  '004C00', '023B01', '012E01', '011D01', '011301']
+};
+
+var NdreVis = {
+  min: 0,
+  max: 1,
+  palette: ['#ffffe5','#f7fcb9','#d9f0a3','#addd8e','#78c679',
+  '#41ab5d','#238443','#006837','#004529']
+};
+
+var MndwiVis = {
+  min: 0,
+  max: 0.5,
+  palette:['#ffffcc','#a1dab4','#41b6c4','#2c7fb8','#253494']
+};
+
+// 9. Display vegetation indices of a selected year (e.g. 2022)
+
+var composite = ee.Image(imagePerYear[5]) // Change index for a different year
+
+Map.addLayer(composite.select('NDVI').clip(AreaOfStudy), NdviVis, 'NDVI composite');
+Map.addLayer(composite.select('SAVI').clip(AreaOfStudy), NdviVis, 'SAVI composite');
+Map.addLayer(composite.select('MSAVI').clip(AreaOfStudy), NdviVis, 'MSAVI composite');
+Map.addLayer(composite.select('NDRE').clip(AreaOfStudy), NdreVis, 'NDRE composite');
+Map.addLayer(composite.select('MNDWI').clip(AreaOfStudy), MndwiVis, 'MNDWI composite'); 
+
+
+// 10. Export rasters for selected year
+
+var indices = ['NDVI', 'SAVI', 'MSAVI', 'NDRE', 'MNDWI'];
+indices.forEach(function(index) {
+  Export.image.toDrive({
+    image: composite.select(index),
+    description: index + '_raster_2022', // Change name if needed
+    folder: 'Pastureland', // Change the folder name
+    fileNamePrefix: index + '_2022', // Change name if needed
+    region: AreaOfStudy.geometry(),
+    scale: 10,
+    crs: 'EPSG:25830', // Adjust depending on the region
+    maxPixels: 1e10
+  });
+});
