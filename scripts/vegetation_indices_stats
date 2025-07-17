@@ -1,16 +1,30 @@
+//#####################################################################################################
+
+
 // Script: Zonal Statistics of Vegetation Indices (2017–2022)
 
 // Project: Transhumant Pastureland Analysis
 
 // Description: 
-// This script computes zonal statistics (mean, standard deviation, min, max)
-// for vegetation indices (NDVI, SAVI, MSAVI, NDRE, MNDWI) using Sentinel-2 imagery.
-// The analysis is conducted on 200-meter radius buffers for each year between 2017 and 2022.
-// A cloud masking function based on the collection S2 CLOUD PROBABILITY is applied.
+//    Computes NDVI, SAVI, MSAVI, NDRE, MNDWI from Sentinel-2 SR.
+//    Applies cloud masking based on S2_CLOUD_PROBABILITY.
+//    Calculates zonal stats (mean, stdDev, min, max) on 200m buffers.
 
 // Requirements:
 // - An imported FeatureCollection named 'AreaOfStudy' (polygon of the study region)
-// - An imported FeatureCollection named 'buffer200' (circular buffers around pasture zones)
+// - An imported FeatureCollection named 'Pastureland' (circular buffers around pasture zones)
+
+
+//#####################################################################################################
+
+
+
+
+
+// Required
+
+// var AreaOfStudy = ee.FeatureCollection(direction) // Insert the direction to the file of the area of study (shapefile, GEOTiff)
+// var Pastureland = ee.FeatureCollection(direction) // Insert the direction to the file of the delimitated pasturelands (shapefile, GEOTiff)
 
 
 // 1. Dates over which to create a median composite
@@ -25,12 +39,12 @@ var dateRange = [
 ];
 
 
-// 2. Loading Sentinel-2 CLOUD PROBABILITY
+// 2. Load Sentinel-2 CLOUD PROBABILITY
 
 var s2Clouds = ee.ImageCollection('COPERNICUS/S2_CLOUD_PROBABILITY');
 
 
-// 3. Loading Sentinel-2 surface reflectance data for the composite
+// 3. Load Sentinel-2 surface reflectance data for the composite
 
 var s2SR = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED');
 
@@ -39,7 +53,7 @@ var s2SR = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED');
 
 var MAX_CLOUD_PROBABILITY = 45;
 
-Map.centerObject(AreaOfStudy); // Adjust the name of the imported feature
+Map.centerObject(AreaOfStudy, 10); // Adjust the name of the imported feature
 
 
 // 5. Define Cloud mask function
@@ -96,11 +110,11 @@ function addIndices(image) {
 var imagePerYear = dateRange.map(function(p) {
 
   var filtereds2SR = s2SR.filterDate(p.start, p.end)
-                     .filterBounds(buffer200)
+                     .filterBounds(Pastureland)
                      .map(maskEdges);
                 
   var filtered2Clouds = s2Clouds.filterDate(p.start, p.end)
-                        .filterBounds(buffer200)
+                        .filterBounds(Pastureland)
   
   var join = ee.Join.saveFirst('cloud_mask').apply({
     primary: filtereds2SR,
@@ -127,7 +141,7 @@ var zonalStats = imagePerYear.map(function(image) {
   var year = image.get('year')
   
   var stats = image.reduceRegions({
-              collection: buffer200,
+              collection: Pastureland,
               reducer: ee.Reducer.mean()
                       .combine(ee.Reducer.stdDev(), '', true)
                       .combine(ee.Reducer.minMax(), '', true),
@@ -196,7 +210,8 @@ Map.addLayer(composite.select('NDRE').clip(AreaOfStudy), NdreVis, 'NDRE composit
 Map.addLayer(composite.select('MNDWI').clip(AreaOfStudy), MndwiVis, 'MNDWI composite'); 
 
 
-// 10. Export rasters for selected year
+
+// 13. Export rasters for selected year
 
 var indices = ['NDVI', 'SAVI', 'MSAVI', 'NDRE', 'MNDWI'];
 indices.forEach(function(index) {
