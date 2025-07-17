@@ -201,7 +201,7 @@ Map.addLayer(composite.select('MNDWI').clip(AreaOfStudy), MndwiVis, 'MNDWI compo
 var indices = ['NDVI', 'SAVI', 'MSAVI', 'NDRE', 'MNDWI'];
 indices.forEach(function(index) {
   Export.image.toDrive({
-    image: composite.select(index),
+    image: composite.select(index).clip(AreaOfStudy),
     description: index + '_raster_2022', // Change name if needed
     folder: 'Pastureland', // rename folder for the Drive
     fileNamePrefix: index + '_2022', // Change name if needed
