@@ -17,8 +17,8 @@
 
 // Required
 
-// var AreaOfStudy = ee.FeatureCollection(direction) // Insert the direction to the file of the area of study (shapefile, GEOTiff)
-// var Pastureland = ee.FeatureCollection(direction) // Insert the direction to the file of the delimitated pasturelands (shapefile, GEOTiff)
+var AreaOfStudy = ee.FeatureCollection(direction) // Insert the direction to the file of the area of study (shapefile, GEOTiff)
+var Pastureland = ee.FeatureCollection(direction) // Insert the direction to the file of the delimitated pasturelands (shapefile, GEOTiff)
 
 
 // 1.  Load the SRTM DEM (30 m resolution)
