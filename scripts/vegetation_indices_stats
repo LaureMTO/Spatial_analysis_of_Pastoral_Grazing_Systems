@@ -153,7 +153,7 @@ var allZonalStats = ee.FeatureCollection(zonalStats).flatten();
 Export.table.toDrive({
  collection: allZonalStats, 
  description: 'ZonalStats_indices', 
- folder: 'Pastureland', 
+ folder: 'Pastureland', // Rename file for Drive
  fileNamePrefix: 'ZonalStats_indices', 
  fileFormat: 'CSV'
 });
@@ -194,3 +194,20 @@ Map.addLayer(composite.select('SAVI').clip(AreaOfStudy), NdviVis, 'SAVI composit
 Map.addLayer(composite.select('MSAVI').clip(AreaOfStudy), NdviVis, 'MSAVI composite');
 Map.addLayer(composite.select('NDRE').clip(AreaOfStudy), NdreVis, 'NDRE composite');
 Map.addLayer(composite.select('MNDWI').clip(AreaOfStudy), MndwiVis, 'MNDWI composite'); 
+
+
+// 10. Export rasters for selected year
+
+var indices = ['NDVI', 'SAVI', 'MSAVI', 'NDRE', 'MNDWI'];
+indices.forEach(function(index) {
+  Export.image.toDrive({
+    image: composite.select(index),
+    description: index + '_raster_2022', // Change name if needed
+    folder: 'Pastureland', // rename folder for the Drive
+    fileNamePrefix: index + '_2022', // Change name if needed
+    region: AreaOfStudy.geometry(),
+    scale: 10,
+    crs: 'EPSG:25830', // Adjust depending on the region
+    maxPixels: 1e10
+  });
+});
