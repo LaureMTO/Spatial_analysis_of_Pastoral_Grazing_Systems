@@ -3,7 +3,7 @@
 // Project: Transhumant Pastureland Analysis
 
 // Description: This script computes elevation, slope, and aspect
-//              inside defined buffers representing pasturelands.
+//              inside defined areas representing pasturelands.
 
 // Requirements: - An imported FeatureCollection named 'AreaOfStudy'
 //               - An imported FeatureCollection of circular buffers named 'buffer200'
@@ -56,6 +56,7 @@ var demVis = {
 
 // 6. Display elevation on the map
 
+
 Map.centerObject(AreaOfStudy, 10)
 Map.addLayer(terrain.select('elevation').clip(AreaOfStudy), demVis, 'Elevation')
 
@@ -72,13 +73,17 @@ Export.table.toDrive({
 
 // 8. Optional: Export of elevation raster to Google Drive
 
-Export.image.toDrive({
-  image:terrain.select('elevation'), 
-  description: 'elevation', 
-  folder: 'Pastureland', // Modify the folder name
-  fileNamePrefix: 'elevation',
-  region: AreaOfStudy.geometry(), 
-  scale: 30, 
-  crs: 'EPSG:25830', // Adjust depending on the region
-  maxPixels: 1e10
-  })
+var topographic = ['slope', 'aspect', 'elevation'];
+
+topographic.forEach(function(topo) {
+  Export.image.toDrive({
+    image:terrain.select(topo).clip(AreaOfStudy), 
+    description: topo + '_raster', 
+    folder: 'Pastureland', // Modify the folder name
+    fileNamePrefix: topo + '_raster' ,
+    region: AreaOfStudy, 
+    scale: 30, 
+    crs: 'EPSG:25830', // Adjust depending on the region
+    maxPixels: 1e10
+});
+});
