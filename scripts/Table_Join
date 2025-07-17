@@ -1,0 +1,68 @@
+//###########################################################################################
+
+// Script: Join Zonal Statistics of Vegetation Indices and Topographic Variables
+
+// Project: Transhumant Pastureland Analysis
+//
+// Description:
+// This script performs an attribute-based table join between two FeatureCollections:
+// - One containing zonal statistics of vegetation indices per buffer and year (2017–2022)
+// - One containing topographic variables per buffer (elevation, slope, aspect)
+
+// The result is a merged table where each row of vegetation indices receives
+// the corresponding static topographic values.
+
+// Requirements:
+// - A FeatureCollection named 'indices' (from vegetation indices CSV, multiple years)
+// - A FeatureCollection named 'topographic' (from DEM-based stats CSV, one row per buffer)
+
+//###########################################################################################
+
+
+
+// 1. Import tables 
+
+var indices = ee.FeatureCollection(direction); // Import direction to first table in csv format
+var toprographic = ee.FeatureCollection(direction) ; // Import direction to second table in csv format
+
+
+// 2. Define filters for join by attributes, here by the column "nom"
+
+var filter = ee.Filter.equals({
+  leftField: 'Nom', // Rename the field to join if needed
+  rightField: 'Nom', // Rename the field to join if needed
+  });
+  
+// 3. Apply many-to-one joint in that case : copy the topographic properties for each indices for each years
+
+var joined = ee.Join.inner().apply({
+  primary: indices, 
+  secondary: topographic, 
+  condition: filter,
+  });
+
+// 4. Merging the two tables properties
+
+var merge = ee.FeatureCollection(joined.map(function(pair) {
+  var primary = ee.Feature(pair.get('primary'));
+  var secondary = ee.Feature(pair.get('secondary'));
+
+// 4.1 Copy topographic table properties in the indices table 
+  return primary.copyProperties(secondary).copyProperties(primary);
+})
+);
+
+// 5. Check if the merging is correct, displays 1st feature properties
+
+print(merge.first())
+
+
+// 6. Export to Google Drive
+
+Export.table.toDrive({
+  collection: merge,
+  description: 'Statistics_merged', // Rename if needed
+  folder: 'Pastureland', // Rename if needed
+  fileNamePrefix: 'Statistics_merged', // Rename if needed
+  fileFormat: 'csv'
+  });
