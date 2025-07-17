@@ -1,228 +1,101 @@
-//#####################################################################################################
+//###########################################################################################
 
-
-// Script: Zonal Statistics of Vegetation Indices (2017–2022)
+// Script: Terrain Analysis using SRTM DEM
 
 // Project: Transhumant Pastureland Analysis
 
 // Description: 
-//    Computes NDVI, SAVI, MSAVI, NDRE, MNDWI from Sentinel-2 SR.
-//    Applies cloud masking based on S2_CLOUD_PROBABILITY.
-//    Calculates zonal stats (mean, stdDev, min, max) on 200m buffers.
+// Computes elevation, slope, and aspect using SRTM data
+// and extracts zonal statistics on defined pastureland areas.
 
 // Requirements:
 // - An imported FeatureCollection named 'AreaOfStudy' (polygon of the study region)
-// - An imported FeatureCollection named 'Pastureland' (buffers/polygons around pasture zones)
+// - An imported FeatureCollection named 'Pastureland' (circular buffers around pasture zones)
 
-
-//#####################################################################################################
-
-
-
+//###########################################################################################
 
 
 // Required
 
-var AreaOfStudy = ee.FeatureCollection(direction) // Insert the direction to the file of the area of study (shapefile, GEOTiff)
-var Pastureland = ee.FeatureCollection(direction) // Insert the direction to the file of the delimitated pasturelands (shapefile, GEOTiff)
+// var AreaOfStudy = ee.FeatureCollection(direction) // Insert the direction to the file of the area of study (shapefile, GEOTiff)
+// var Pastureland = ee.FeatureCollection(direction) // Insert the direction to the file of the delimitated pasturelands (shapefile, GEOTiff)
 
 
-// 1. Dates over which to create a median composite
+// 1.  Load the SRTM DEM (30 m resolution)
 
-var dateRange = [
-  {label: '2017', start: '2017-04-01', end: '2017-08-01'}, // adapt if needed
-  {label: '2018', start: '2018-04-01', end: '2018-08-01'},
-  {label: '2019', start: '2019-04-01', end: '2019-08-01'},
-  {label: '2020', start: '2020-04-01', end: '2020-08-01'},
-  {label: '2021', start: '2021-04-01', end: '2021-08-01'},
-  {label: '2022', start: '2022-04-01', end: '2022-08-01'},
-];
+var dem = ee.Image('USGS/SRTMGL1_003');
+var terrain = ee.Terrain.products(dem)
 
 
-// 2. Load Sentinel-2 CLOUD PROBABILITY
+// 2. Extracting elevation, slope and aspect 
 
-var s2Clouds = ee.ImageCollection('COPERNICUS/S2_CLOUD_PROBABILITY');
+var slope = terrain.select('slope').rename('slope_mean');     // in degrees
 
+var aspect = terrain.select('aspect').rename('aspect_mean');   // in degrees
 
-// 3. Load Sentinel-2 surface reflectance data for the composite
-
-var s2SR = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED');
-
-
-// 4. Masking cloud probability maximum variable
-
-var MAX_CLOUD_PROBABILITY = 45;
-
-Map.centerObject(AreaOfStudy, 10); // Adjust the name of the imported feature
+var elevation = terrain.select('elevation').rename('elevation_mean');
 
 
-// 5. Define Cloud mask function
+// 3. Combine terrain variables into a single image
 
-function maskClouds(img) {
-  var clouds = ee.Image(img.get('cloud_mask')).select('probability');
-  var isNotCloud = clouds.lt(MAX_CLOUD_PROBABILITY);
-  return img.updateMask(isNotCloud);
-}
-
-// The masks for the 10m bands sometimes do not exclude bad data at
-// scene edges, so we apply masks from the 20m and 60m bands as well.
-// Example asset that needs this operation:
-// COPERNICUS/S2_CLOUD_PROBABILITY/20190301T000239_20190301T000238_T55GDP
-
-function maskEdges(s2_img) {
-  return s2_img.updateMask(
-      s2_img.select('B8A').mask().updateMask(s2_img.select('B9').mask())
-  );
-}
-
-
-// 6. Defining indices function (NDVI, MSAVI, NDRE, SAVI)
-
-function addIndices(image) {
-  var ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI');
-   
-  var msavi = image.expression(
-    '(2 * NIR + 1 - sqrt(pow((2 * NIR + 1), 2) - 8 * (NIR - RED)) ) / 2', {
-      'NIR': image.select('B8').multiply(0.0001),
-      'RED': image.select('B4').multiply(0.0001)
-    }).rename('MSAVI');
-  
-  var ndre = image.normalizedDifference(['B8', 'B5']).rename('NDRE');
-  
-  var savi = image.expression(
-    '1.5 * ((NIR - RED) / (NIR + RED + 0.5))', {
-      'NIR': image.select('B8').multiply(0.0001),
-      'RED': image.select('B4').multiply(0.0001),
-}).rename('SAVI');
-   
-  var mndwi = image.normalizedDifference(['B3', 'B11']).rename('MNDWI');
-
-  return ndvi
-        .addBands(savi)
-        .addBands(msavi)
-        .addBands(ndre)
-        .addBands(mndwi)
-}
-
-
-// 7. Compute one median composite per year with indices and cloud mask
-
-var imagePerYear = dateRange.map(function(p) {
-
-  var filtereds2SR = s2SR.filterDate(p.start, p.end)
-                     .filterBounds(Pastureland)
-                     .map(maskEdges);
+var topoImage = elevation
+                .addBands(slope)
+                .addBands(aspect)
                 
-  var filtered2Clouds = s2Clouds.filterDate(p.start, p.end)
-                        .filterBounds(Pastureland)
-  
-  var join = ee.Join.saveFirst('cloud_mask').apply({
-    primary: filtereds2SR,
-    secondary: filtered2Clouds,
-    condition: ee.Filter.equals({
-      leftField: 'system:index',
-      rightField: 'system:index'
-    })
-  });
-  
-  var joinedCollection = ee.ImageCollection(join)
-                          .map(maskClouds)
-                          .map(addIndices)
-                          .median();
-                          
-                          
-  return joinedCollection.set('year', p.label);
-});
+
+// 4. Compute Zonal statistics of elevation, slope and aspect for each buffer
+
+var topoStats = topoImage.reduceRegions({
+                collection: Pastureland, 
+                reducer: ee.Reducer.mean(), 
+                scale: 30, 
+                crs:'EPSG:25830', // Adjust depending on the region
+                maxPixelsPerRegion: 1e10
+                });
+
+print("Topographic Stats per buffer", topoStats)
 
 
-// 8. Calculate zonal statistics over buffers for each year
+// 5. Visualization parameters
 
-var zonalStats = imagePerYear.map(function(image) {
-  var year = image.get('year')
-  
-  var stats = image.reduceRegions({
-              collection: Pastureland,
-              reducer: ee.Reducer.mean()
-                      .combine(ee.Reducer.stdDev(), '', true)
-                      .combine(ee.Reducer.minMax(), '', true),
-              scale: 10, 
-              crs: 'EPSG:25830', // Adjust depending on the region
-            maxPixelsPerRegion: 1e10
-            });
-  return stats.map(function(f) {
-    return f.set('year', year);
-  });
-});
-
-print("Vegetation indices Zonal Stats", zonalStats)
+var demVis = {
+  min: 0,
+  max: 3500, // Adjust depending on the region
+  palette : ['#0000ff', '#00ffff', '#00ff00', '#ffff00',
+  '#ff8000', '#ff0000', '#ffffff'
+]};
 
 
-// 9. Merge all results into a single FeatureCollection before export
-
-var allZonalStats = ee.FeatureCollection(zonalStats).flatten();
+// 6. Display elevation on the map
 
 
-// 10. Export of Zonal statistics of Vegetation Indices on buffers
+Map.centerObject(AreaOfStudy, 10)
+Map.addLayer(terrain.select('elevation').clip(AreaOfStudy), demVis, 'Elevation')
+
+
+// 7. Export of topographic statistics as csv to Google Drive
 
 Export.table.toDrive({
- collection: allZonalStats, 
- description: 'ZonalStats_indices', 
- folder: 'Pastureland', // Rename file for Drive
- fileNamePrefix: 'ZonalStats_indices', 
+ collection: topoStats, 
+ description: 'Topographic_Stats', 
+ folder: 'Pastureland', // Modify the folder name
+ fileNamePrefix: 'Topographic_Stats', 
  fileFormat: 'CSV'
 });
 
+// 8. Optional: Export of elevation raster to Google Drive
 
-// 11. Indices Visualization settings
+var topographic = ['slope', 'aspect', 'elevation'];
 
-var NdviVis = {
-  min: 0,
-  max: 0.7,
-  palette: [
-    'FFFFFF', 'CE7E45', 'DF923D', 'F1B555', 'FCD163', '99B718',
-  '74A901', '66A000', '529400', '3E8601', '207401', '056201',
-  '004C00', '023B01', '012E01', '011D01', '011301']
-};
-
-var NdreVis = {
-  min: 0,
-  max: 1,
-  palette: ['#ffffe5','#f7fcb9','#d9f0a3','#addd8e','#78c679',
-  '#41ab5d','#238443','#006837','#004529']
-};
-
-var MndwiVis = {
-  min: 0,
-  max: 0.5,
-  palette:['#ffffcc','#a1dab4','#41b6c4','#2c7fb8','#253494']
-};
-
-
-// 12. Display vegetation indices of a selected year (e.g. 2022)
-
-var composite = ee.Image(imagePerYear[5]) // Change index for a different year
-
-
-Map.addLayer(composite.select('NDVI').clip(AreaOfStudy), NdviVis, 'NDVI composite');
-Map.addLayer(composite.select('SAVI').clip(AreaOfStudy), NdviVis, 'SAVI composite');
-Map.addLayer(composite.select('MSAVI').clip(AreaOfStudy), NdviVis, 'MSAVI composite');
-Map.addLayer(composite.select('NDRE').clip(AreaOfStudy), NdreVis, 'NDRE composite');
-Map.addLayer(composite.select('MNDWI').clip(AreaOfStudy), MndwiVis, 'MNDWI composite'); 
-
-
-
-// 13. Export rasters for selected year
-
-var indices = ['NDVI', 'SAVI', 'MSAVI', 'NDRE', 'MNDWI'];
-indices.forEach(function(index) {
+topographic.forEach(function(topo) {
   Export.image.toDrive({
-    image: composite.select(index).clip(AreaOfStudy),
-    description: index + '_raster_2022', // Change name if needed
-    folder: 'Pastureland', // rename folder for the Drive
-    fileNamePrefix: index + '_2022', // Change name if needed
-    region: AreaOfStudy.geometry(),
-    scale: 10,
+    image:terrain.select(topo).clip(AreaOfStudy), 
+    description: topo + '_raster', 
+    folder: 'Pastureland', // Rename folder if needed
+    fileNamePrefix: topo + '_raster' ,
+    region: AreaOfStudy, 
+    scale: 30, 
     crs: 'EPSG:25830', // Adjust depending on the region
     maxPixels: 1e10
-  });
+});
 });
