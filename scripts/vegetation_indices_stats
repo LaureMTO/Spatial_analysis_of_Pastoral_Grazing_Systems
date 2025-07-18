@@ -53,7 +53,7 @@ var s2SR = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED');
 
 var MAX_CLOUD_PROBABILITY = 45;
 
-Map.centerObject(AreaOfStudy, 10); // Adjust the name of the imported feature
+Map.centerObject(AreaOfStudy, 10); 
 
 
 // 5. Define Cloud mask function
@@ -64,11 +64,6 @@ function maskClouds(img) {
   return img.updateMask(isNotCloud);
 }
 
-// The masks for the 10m bands sometimes do not exclude bad data at
-// scene edges, so we apply masks from the 20m and 60m bands as well.
-// Example asset that needs this operation:
-// COPERNICUS/S2_CLOUD_PROBABILITY/20190301T000239_20190301T000238_T55GDP
-
 function maskEdges(s2_img) {
   return s2_img.updateMask(
       s2_img.select('B8A').mask().updateMask(s2_img.select('B9').mask())
@@ -76,7 +71,7 @@ function maskEdges(s2_img) {
 }
 
 
-// 6. Defining indices function (NDVI, MSAVI, NDRE, SAVI)
+// 6. Define indices function (NDVI, MSAVI, NDRE, SAVI, MNDWI)
 
 function addIndices(image) {
   var ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI');
